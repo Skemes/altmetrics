@@ -1,3 +1,14 @@
+#RSTUDIO BS: if you have a function, you must highlt all of it to make it run
+#Conversely, if you ever have a multi-line statement, MUST highlight all of it.
+
+#R Makes all text factors, so you MUST WATCH this
+#get rid of excess levels: variable <- droplevels(variable)
+
+#str(X) is the best way to see what X is or should be
+
+#enter ?options on an r console to get function information on bottom right of
+#this screen
+
 #LOAD DATA
 counts_raw <- read.delim("data/counts-raw.txt.gz")
 
@@ -233,3 +244,104 @@ specialPoints <- log10(specialPoints + 1)
 histo2 <- histo <- ggplot(research %>% filter(wosCountThru2010 > 2), aes(x=log(wosCountThru2010+1)))
 histo2 <- histo2 + geom_histogram(aes(y=density(specialPoints)))
 histo + stat_function(fun=dexp, args=with(research, c(rate=1/mean(wosCountThru2010))))
+
+#Review of R Loops -- apply along axes
+counts_sub <- counts_raw[,c("wosCountThru2011", "backtweetsCount", "plosCommentCount")]
+
+sum_stat <- apply(counts_sub, 1, mean, na.rm = TRUE) #apply along rows, 1, columns is 2
+#NOTE: anything after the function, it passes it to mean.
+summary(sum_stat)
+
+#Functions
+#root is optional
+myFunc <- function(x, y, root){
+  if(missing(root)){
+    root <- 2
+  }
+  return(2^(x*y))
+}
+
+getMeanforJournal <- function(dframe, journalType, metric, functionMetric){
+  return(functionMetric(dframe$metric[dframe$journal == journalType]))
+}
+
+
+#works! huzzah!
+getFunctionforMetric <- function(dframe, variable, metric, functionMetric, ...){
+  stopifnot(is.data.frame(dframe), is.function(functionMetric), variable %in% colnames(dframe), metric %in% colnames(dframe))
+  if(!is.factor(dframe[[variable]])){
+    warning("Variable is not a factor")
+    dframe[[variable]] <- as.factor(dframe[[variable]])
+  }
+  resultFrame <- numeric(length = length(levels(dframe[[variable]])))
+  names(resultFrame) <- levels(dframe[[variable]])
+
+  for(vlevel in levels(dframe[[variable]])){
+    intermediate <- dframe[ dframe[, variable] == vlevel, metric ]
+    resultFrame[vlevel] = functionMetric(intermediate, ...)
+  }
+  stopifnot(!is.na(resultFrame))
+  return(resultFrame)
+}
+
+#myDat <- getFunctionforMetric(counts_raw, "journal", "facebookLikeCount", mean, na.rm = TRUE)
+myDat <- getFunctionforMetric(counts_raw, "journal", "facebookLikeCount", mean) 
+str(myDat)
+myDat
+
+#Defensive Programming
+#Lets you list a bunch of tests to conduct. If any goes wrong, will list that.
+#Essentially lets you check a bunch of conditions on portions of code
+#syntax: stopifnot(test1, test2, test3, etc) ex: test1 = is.character(x), etc.
+#or length(metric1) == length(metric2)
+#How this works: always dframe[row, column]
+#this selects the subset of rows with the given column property and returns the value at the 
+#specified column, in this case "backtweetsCount"
+xxx <- counts_raw[ counts_raw[, "journal"] == "pone", "backtweetsCount"]
+
+levels(counts_raw[["journal"]])
+
+str(xxx)
+
+###DEBUGGING TUTORIAL###
+#All: https://jdblischak.github.io/r-intermediate-altmetrics/
+#https://jdblischak.github.io/r-intermediate-altmetrics/20-debug.html
+#print(n) within debugger gets you the value of n if n is in your code (since it's a command)
+#(in the debugger)
+#stopifnot(!is.na(result)) is very useful
+
+#to pass a warning: Warning("This is not a factor")
+
+#Testit library
+#Gives you very nice assert function:
+#assert("You gave me a vector, not a dframe", is.data.frame(dframe) == FALSE)
+#has_error is also useful:
+#assert("Attempting to add different types", has_error(1 + "a"))
+
+#Idea is to convert these to unit tests AFTER solving a problem:
+#for example, we know that the above function should work with na's for mean.
+#thus, we can make this into a unit test:
+#assert("Not handling NA's properly", has_error(getFunctionforMetric(counts_raw, "journal", "facebookLikeCount", mean))
+#the pass case is:
+#getFunctionforMetric(counts_raw, "journal", "facebookLikeCount", mean, na.rm=TRUE)
+library("testit")
+#Practicing with Unit Tests
+my_mean <- function(x) {
+  result <- sum(x) / length(x)
+  return(result)
+}
+
+#Note that has_error() evaluates to TRUE if the code within has an error
+#However, assert() shows the message ONLY if the statement evaluates to false
+#so if we use has_error in assert(), then assert() only shows if the thing DOESN'T
+#generate an error, which is a little awkward.
+
+#The best way is to make fake data with known answers and see if functions are working
+
+assert("x has a NA's within it", !is.na(my_mean(c(1,2,NA,3))) )
+
+assert("my_mean does not check if x is a vector", !has_error(my_mean(counts_raw)))
+
+assert("my_mean does not check if x has elements", has_error(my_mean(c())))
+
+assert("my_mean does not throw out character vectors", !has_error(my_mean(c("a", "b", "c"))))
