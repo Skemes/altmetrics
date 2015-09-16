@@ -1,0 +1,37 @@
+---
+title: "Trial Report"
+author: "Ryan Dork"
+date: "September 15, 2015"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+Here's the documentation that is very useful: http://yihui.name/knitr/options/#chunk_options
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+<!-- shows the r code without results -->
+```{r myCode, results='hide'} 
+print("Danny is lame")
+
+```
+
+<!-- shows the neither results nor code-->
+```{r myCode2, include = FALSE} 
+x <- 3
+hist(rnorm(100))
+
+```

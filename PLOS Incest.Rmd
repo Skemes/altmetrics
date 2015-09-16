@@ -1,0 +1,43 @@
+---
+title: "PLOS Incest"
+author: "Ryan Dork"
+date: "September 15, 2015"
+output:
+  word_document: default
+  pdf_document:
+    toc: yes
+  html_document:
+    fig_caption: yes
+    fig_height: 8
+    fig_width: 8
+    highlight: tango
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+---
+
+<!-- library("rmarkdown")
+render("filename.Rmd") 
+This lets you generate reports from the command line-->
+
+```{r data_load, echo=FALSE}
+counts_raw <- read.delim("data/counts-raw.txt.gz")
+counts_norm <- read.delim("data/counts-norm.txt.gz")
+```
+
+#Exploring Zee Data
+
+```{r author_histogram, warning=FALSE, echo=FALSE, fig.cap="Figure 1: People Publish Papars"}
+hist(counts_raw$authorsCount, main="Authors per paper", xlab="# authors")
+
+x <- mean(counts_raw$facebookShareCount)
+```
+
+#Facebook is For Plebs
+
+```{r pleb_histogram, warning=FALSE, echo=FALSE, fig.cap="Figure 2: I don't care about Facebook"}
+hist(counts_raw$facebookShareCount, main="Number of Facebook Shares", xlab="# shares", xlim=c(1,100), breaks=50)
+```
+
+The average number of Facebook shares per paper in the data set is **`r sprintf("%.3f", x)`**
+The maximum numbe of shares is **`r sprintf("%.3f", max(counts_raw$facebookShareCount))`**
